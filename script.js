@@ -99,20 +99,46 @@ const OrderDialog = {
             return this.allowConfirm ? "orderDialog-data-item" : "orderDialog-data-item error";
         },
         confirmOrder() {
+            let orderData = {
+                name: this.name,
+                price: this.price,
+                size: this.orderSize,
+                userName: this.orderName,
+                userPhone: this.orderPhone,
+                userEmail: this.orderEmail,
+                delivery:this.orderAddress
+            };
 
-            console.log('Ваш заказ:');
-            console.log(this.name);
-            console.log(this.prettify(this.price) + " руб.");
-            console.log(this.orderSize);
-            console.log('Ваши данные:');
-            console.log(this.orderName);
-            console.log(this.orderPhone);
-            console.log(this.orderEmail);
-            if (delivery) {
-                console.log('Доставка по адресу:');
-                console.log(this.orderAddress);
-            }
-            this.orderNotAccepted = false
+            //console.log('orderData', orderData);
+            // В url НАДО ЗАДАТЬ ССЫЛКУ:
+            const url = "https://developer.mozilla.org/";
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify(orderData)
+              })
+            .then(response => response.JSON())
+            .then(result => {
+                this.orderNotAccepted = false
+                });
+
+            // console.log('Ваш заказ:');
+            // console.log(this.name);
+            // console.log(this.prettify(this.price) + " руб.");
+            // console.log(this.orderSize);
+            // console.log('Ваши данные:');
+            // console.log(this.orderName);
+            // console.log(this.orderPhone);
+            // console.log(this.orderEmail);
+            // if (delivery) {
+            //     console.log('Доставка по адресу:');
+            //     console.log(this.orderAddress);
+            // }
+            // this.orderNotAccepted = false
+
+
         }
     },
     computed: {
