@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * 
+ *
  */
 const OrderDialog = {
     name: 'order-dialog',
@@ -74,56 +74,80 @@ const OrderDialog = {
                        <div class="orderDialog__accepted__close" @click="closeOrderDialog"></div>
                     </div>
                 </div>`,
-    mounted(){
+    mounted() {
         this.orderSize = this.selectedsize;
     },
     methods: {
-        isValidPhone(myPhone) { 
-            if (myPhone){
-                return this.phoneRegExp.test(myPhone.replace(/\s/g, '')); 
+        isValidPhone(myPhone) {
+            if (myPhone) {
+                return this.phoneRegExp.test(myPhone.replace(/\s/g, ''));
             } else {
                 return false;
             }
         },
-        closeOrderDialog(){
+        closeOrderDialog() {
             this.$emit('closeOrderDialog')
         },
         prettify(num) {
             var n = num.toString();
             return n.replace(/(\d{1,3}(?=(?:\d\d\d)+(?!\d)))/g, "$1" + ' ');
         },
-        orderBtnClass(){
+        orderBtnClass() {
             return this.allowConfirm ? "contactUs-btn" : "contactUs-btn disabled-btn";
         },
-        phoneClass(){
+        phoneClass() {
             return this.allowConfirm ? "orderDialog-data-item" : "orderDialog-data-item error";
         },
-        confirmOrder(){
-            
-            console.log('Ваш заказ:');
-            console.log(this.name);
-            console.log(this.prettify(this.price) + " руб.");
-            console.log(this.orderSize);
-            console.log('Ваши данные:');
-            console.log(this.orderName);
-            console.log(this.orderPhone);
-            console.log(this.orderEmail);
-            if (delivery) {
-                console.log('Доставка по адресу:');
-                console.log(this.orderAddress);
-            }
-            this.orderNotAccepted = false
+        confirmOrder() {
+            let orderData = {
+                name: this.name,
+                price: this.price,
+                size: this.orderSize,
+                userName: this.orderName,
+                userPhone: this.orderPhone,
+                userEmail: this.orderEmail,
+                delivery:this.orderAddress
+            };
+
+            //console.log('orderData', orderData);
+            // В url НАДО ЗАДАТЬ ССЫЛКУ:
+            const url = "https://developer.mozilla.org/";
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify(orderData)
+              })
+            .then(response => response.JSON())
+            .then(result => {
+                this.orderNotAccepted = false
+                });
+
+            // console.log('Ваш заказ:');
+            // console.log(this.name);
+            // console.log(this.prettify(this.price) + " руб.");
+            // console.log(this.orderSize);
+            // console.log('Ваши данные:');
+            // console.log(this.orderName);
+            // console.log(this.orderPhone);
+            // console.log(this.orderEmail);
+            // if (delivery) {
+            //     console.log('Доставка по адресу:');
+            //     console.log(this.orderAddress);
+            // }
+            // this.orderNotAccepted = false
         }
     },
     computed: {
-        allowConfirm(){
-            if (this.isValidPhone(this.orderPhone)){
+        allowConfirm() {
+            if (this.isValidPhone(this.orderPhone)) {
                 return true;
             } else {
                 return false;
             }
         }
-    } 
+    }
 }
 /**
  * Компонент карусели картинок набора
@@ -265,7 +289,7 @@ const VCarouselItem = {
                         <order-dialog v-if="this.orderDialogOpened" :name="card.name" :price="cardPrice" :selectedsize="activeSize" :sizes="card.sizes" :picture="card.picture" @closeOrderDialog="closeOrderDialog" />
                 </div>`,
     methods: {
-        changeSize(newSize){
+        changeSize(newSize) {
             this.activeSize = newSize;
         },
         prettify(num) {
@@ -279,10 +303,10 @@ const VCarouselItem = {
         closeOrderDialog() {
             this.orderDialogOpened = false;
         },
-        openOrderDialog(){
+        openOrderDialog() {
             this.orderDialogOpened = true;
         },
-        getDescKey(idx){
+        getDescKey(idx) {
             return "desc" + this.card.id + idx.toString();
         }
     },
@@ -293,12 +317,12 @@ const VCarouselItem = {
         detailsClass() {
             return this.descriptionOpened ? "v-carousel-item__name__details" : "v-carousel-item__name__details v-carousel-item__name__details__rotated";
         },
-        cardPrice(){
-            if (this.activeSize === "S"){
+        cardPrice() {
+            if (this.activeSize === "S") {
                 return 700;
-            } else if(this.activeSize === "M"){
+            } else if (this.activeSize === "M") {
                 return 1500;
-            }else{
+            } else {
                 return 2500;
             }
         }
@@ -524,31 +548,103 @@ window.onload = function () {
 
 let hiddenFormContainer = document.querySelector('.contactUs');
 let hiddenForm = document.querySelector('.contactUs-form');
+let confirm = document.querySelector('.confirm');
+
+let closeButton = document.querySelector(".close-btn");
+let confirmCloseButton = document.querySelector(".confirm-close-btn");
+
+closeButton.addEventListener('click', function () {
+    hiddenFormContainerClose();
+}, false);
+
+confirmCloseButton.addEventListener('click', function () {
+    hiddenFormContainerClose();
+}, false);
+
+
+/**
+ * Поведение формы при отправке
+ * */
+hiddenForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    if (formValidate()) {
+        formSubmit();
+    }
+
+}, false);
+
+/**
+ *
+ * */
+function formSubmit() {
+    let formData = new FormData(hiddenForm);
+    let request = new XMLHttpRequest();
+
+    let method = "GET";
+    let url = "https://developer.mozilla.org/";
+
+    request.open(method, url, true);
+    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    request.onreadystatechange = function () {
+        // In local files, status is 0 upon success in Mozilla Firefox
+        if (request.readyState === XMLHttpRequest.DONE) {
+            let status = request.status;
+            if (status === 0 || (status >= 200 && status < 400)) {
+                // The request has been completed successfully
+                formClose();
+                confirmOpen();
+            } else {
+                // Oh no! There has been an error with the request!
+            }
+        }
+    };
+    request.send(formData);
+}
+
+/**
+ * Закрытие контейнера формы
+ * */
+function hiddenFormContainerClose() {
+    formClose()
+    confirmClose()
+    hiddenFormContainer.style.display = "none";
+}
 
 /**
  * Закрытие формы
  * */
-function formClose(event) {
-    // event.preventDefault();
-    hiddenFormContainer.style.display = "none";
-    hiddenForm.classList.remove('opened');
+function formClose() {
+    hiddenForm.style.display = "none";
 }
-
-let closeButton = document.querySelector(".close-btn");
-closeButton.addEventListener('click', formClose, false);
 
 /**
  * Открытие формы
  * */
 function formOpen() {
     hiddenFormContainer.style.display = "block";
-    hiddenForm.classList.add('opened');
+    hiddenForm.style.display = "block";
 }
 
 let openButtons = document.querySelectorAll(".open-contactUs");
 openButtons.forEach(element => {
     element.addEventListener('click', formOpen, false);
 })
+
+/**
+ * Открытие подтверждения об успешной отправке формы
+ * */
+function confirmOpen() {
+    confirm.style.display = "block";
+}
+
+/**
+ * Открытие подтверждения об успешной отправке формы
+ * */
+function confirmClose() {
+    confirm.style.display = "none";
+}
 
 
 /*__________________FORM-VALIDATION-----------------------------------------------------------------------------------*/
@@ -559,29 +655,39 @@ let requiredText = hiddenFormContainer.querySelector('.required-text');
 let phoneField = hiddenFormContainer.querySelector('#phone');
 let emailField = hiddenFormContainer.querySelector('#email');
 
-let requiredItems = [phoneField, emailField];
+let requiredItems = [phoneField, emailField]; //поля ввода, которые нужно валидировать
 
 /**
- * Обработчик события конкретно на те поля ввода, которые нужно валидировать
+ * Обработчики события конкретно на те поля ввода, которые нужно валидировать
+ * 1) валидация по событию 'blur'
+ * 2) валидация по событию 'input'
  * */
 requiredItems.forEach(formField => {
-    formField.addEventListener('blur', function () {
-        let checkPhone = isValidPhone(phoneField.value);
-        let checkEmail = isValidEmail(emailField.value);
+    formField.addEventListener('blur', formValidate, false);
+})
+requiredItems.forEach(formField => {
+    formField.addEventListener('input', formValidate, false);
+})
 
-        clearErrors();
+/**
+ * Общая функция валидации формы
+ * */
+function formValidate() {
+    let checkPhone = isValidPhone(phoneField.value);
+    let checkEmail = isValidEmail(emailField.value);
 
-        if (phoneField.value.length === 0) {
-            addErrorEmptyField();
-        } else if (!checkPhone) {
-            addErrorWrongPhone();
-        }
+    clearErrors();
 
-        if (!checkEmail) {
-            addErrorWrongMail();
-        }
-    })
-});
+    if (phoneField.value.length === 0) {
+        addErrorEmptyField();
+    } else if (!checkPhone) {
+        addErrorWrongPhone();
+    }
+
+    if (!checkEmail) addErrorWrongMail();
+
+    if (checkPhone && checkEmail) return true;
+}
 
 /**
  * Валидация поля ввода телефонного номера
@@ -707,15 +813,6 @@ window.addEventListener("DOMContentLoaded", function () {
 
 
 /*___________________________маска для ввода телефонного номера_______________________________________________________*/
-
-
-/**
- * Отмена стандартного поведения формы
- * */
-hiddenForm.addEventListener('submit', function (event) {
-    event.preventDefault();
-
-}, false);
 
 
 /*FORM-------------------------------------------------------------------------------------------------------------END*/
